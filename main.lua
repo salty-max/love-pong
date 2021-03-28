@@ -42,6 +42,13 @@ function love.load()
     -- Set Löve active font
     love.graphics.setFont(defaultfont)
 
+    -- Set up sound effects table
+    sounds = {
+        ['paddle_hit'] = love.audio.newSource('resources/sounds/paddle_hit.wav', 'static'),
+        ['score'] = love.audio.newSource('resources/sounds/score.wav', 'static'),
+        ['wall_hit'] = love.audio.newSource('resources/sounds/wall_hit.wav', 'static')
+    }
+
     love.window.setTitle('Pong')
 
     -- Initialize virtual resolution
@@ -85,6 +92,7 @@ function love.update(dt)
         -- Detect ball collision with paddles, reversing dx if true and
         -- slightly increasing it, then altering the dy based on position
         if ball:collides(player1) then
+            sounds['paddle_hit']:play()
             ball.dx = -ball.dx * 1.03
             -- shift ball outside of paddle to avoid infinite collision
             ball.x = player1.x + 5
@@ -98,6 +106,7 @@ function love.update(dt)
         end
 
         if ball:collides(player2) then
+            sounds['paddle_hit']:play()
             ball.dx = -ball.dx * 1.03
             -- shift ball outside of paddle to avoid infinite collision
             ball.x = player2.x - 4
@@ -113,11 +122,13 @@ function love.update(dt)
         -- Detect upper and lower screen edge collision and reverse it
         -- if collision happens
         if ball.y <= 0 then
+            sounds['wall_hit']:play()
             ball.y = 0
             ball.dy = -ball.dy
         end
         -- -4 to account for the ball's size
         if ball.y >= VIRTUAL_HEIGHT - 4 then
+            sounds['wall_hit']:play()
             ball.y = VIRTUAL_HEIGHT - 4
             ball.dy = -ball.dy
         end
@@ -125,6 +136,7 @@ function love.update(dt)
         -- If the ball reaches the left or right edge of the screen,
         -- reset the ball and update the score
         if ball.x < 0 then
+            sounds['score']:play()
             servingPlayer = 1
             player2Score = player2Score + 1
 
@@ -138,6 +150,7 @@ function love.update(dt)
         end
 
         if ball.x > VIRTUAL_WIDTH then
+            sounds['score']:play()
             servingPlayer = 2
             player1Score = player1Score + 1
 
