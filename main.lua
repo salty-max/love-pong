@@ -62,6 +62,48 @@ function love.load()
 end
 
 function love.update(dt)
+  if gameState == 'play' then
+    -- Detect ball collision with paddles, reversing dx if true and
+    -- slightly increasing it, then altering the dy based on position
+    if ball:collides(player1) then
+      ball.dx = -ball.dx * 1.03
+      -- shift ball outside of paddle to avoid infinite collision
+      ball.x = player1.x + 5
+
+      -- Keep y velocity going in the same direction, but randomize it
+      if ball.dy < 0 then
+        ball.dy = -math.random(10, 150)
+      else
+        ball.dy = math.random(10, 150)
+      end
+    end
+
+    if ball:collides(player2) then
+      ball.dx = -ball.dx * 1.03
+      -- shift ball outside of paddle to avoid infinite collision
+      ball.x = player2.x - 4
+
+      -- Keep y velocity going in the same direction, but randomize it
+      if ball.dy < 0 then
+        ball.dy = -math.random(10, 150)
+      else
+        ball.dy = math.random(10, 150)
+      end
+    end
+
+    -- Detect upper and lower screen edge collision and reverse it
+    -- if collision happens
+    if ball.y <= 0 then
+      ball.y = 0
+      ball.dy = -ball.dy
+    end
+    -- -4 to account for the ball's size
+    if ball.y >= VIRTUAL_HEIGHT - 4 then
+      ball.y = VIRTUAL_HEIGHT - 4
+      ball.dy = -ball.dy
+    end
+  end
+
   -- Player 1 movement
   if love.keyboard.isDown('z') then
     -- Add negative speed to the paddle
@@ -130,7 +172,8 @@ function love.draw()
   -- Render ball
   ball:render()
 
-  displayFPS() 
+  displayFPS()
+  displayBallVelocity()
 
   -- End rendering at virtual resolution
   push:apply('end')
@@ -142,6 +185,18 @@ end
 function displayFPS()
   -- FPS display across all states
   love.graphics.setFont(defaultfont)
+  
   love.graphics.setColor(0, 1, 0 ,1)
   love.graphics.print('FPS: ' .. tostring(love.timer.getFPS()), 10, 10)
+end
+
+--[[
+  Renders the ball velocity
+  -- DEBUG PURPOSE ONLY --
+]]
+function displayBallVelocity()
+  love.graphics.setFont(defaultfont)
+  love.graphics.setColor(1, 0, 0 ,1)
+  love.graphics.print("BALL DX: " .. tostring(ball.dx), 10, 20)
+  love.graphics.print("BALL DY: " .. tostring(ball.dy), 10, 30)
 end
