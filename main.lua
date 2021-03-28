@@ -25,6 +25,7 @@ VIRTUAL_WIDTH = 432
 VIRTUAL_HEIGHT = 243
 
 PADDLE_SPEED = 200
+SCORE_TO_WIN = 10
 
 function love.load()
     -- Use nearest neighbor filtering
@@ -36,6 +37,7 @@ function love.load()
 
     -- Load fonts
     defaultfont = love.graphics.newFont('resources/font.ttf', 8)
+    largefont = love.graphics.newFont('resources/font.ttf', 16)
     scorefont = love.graphics.newFont('resources/font.ttf', 32)
     -- Set Löve active font
     love.graphics.setFont(defaultfont)
@@ -55,6 +57,7 @@ function love.load()
 
     -- Player 1 serves first
     servingPlayer = 1
+    winningPlayer = 0
 
     -- Place a ball in the middle of the screen
     ball = Ball(VIRTUAL_WIDTH / 2 - 2, VIRTUAL_HEIGHT / 2 - 2, 4, 4)
@@ -124,15 +127,28 @@ function love.update(dt)
         if ball.x < 0 then
             servingPlayer = 1
             player2Score = player2Score + 1
-            gameState = 'serve'
-            ball:reset()
+
+            if player2Score == SCORE_TO_WIN then
+                winningPlayer = 2
+                gameState = 'done'
+            else
+                gameState = 'serve'
+                ball:reset()
+            end
         end
 
         if ball.x > VIRTUAL_WIDTH then
             servingPlayer = 2
             player1Score = player1Score + 1
-            gameState = 'serve'
-            ball:reset()
+
+            if player1Score == SCORE_TO_WIN then
+                winningPlayer = 1
+                gameState = 'done'
+            else
+                gameState = 'serve'
+                ball:reset()
+            end
+
         end
     end
 
@@ -173,10 +189,17 @@ function love.keypressed(key)
     elseif key == 'enter' or key == 'return' then
         if gameState == 'start' then
             gameState = 'serve'
-            -- Reset ball position and give it a new random starting velocity
-            ball:reset()
         elseif gameState == 'serve' then
             gameState = 'play'
+        elseif gameState == 'done' then
+            gameState = 'serve'
+            -- Reset ball position and give it a new random starting velocity
+            ball:reset()
+
+            player1Score = 0
+            player2Score = 0
+            servingPlayer = winningPlayer == 1 and 2 or 1
+            gameState = "serve"
         end
     end
 end
@@ -201,7 +224,6 @@ function love.draw()
     ball:render()
 
     displayFPS()
-    displayBallVelocity()
 
     -- End rendering at virtual resolution
     push:apply('end')
@@ -218,6 +240,14 @@ function displayInfo()
     elseif gameState == 'serve' then
         love.graphics.printf('Player ' .. tostring(servingPlayer) .. ' is serving!', 0, 20, VIRTUAL_WIDTH, 'center')
         love.graphics.printf('Press Enter to serve', 0, 30, VIRTUAL_WIDTH, 'center')
+    elseif gameState == 'done' then
+        love.graphics.setColor(0, 1, 0, 1)
+        love.graphics.setFont(largefont)
+        love.graphics.printf('Player ' .. tostring(winningPlayer) .. ' wins!', 0, 20, VIRTUAL_WIDTH, 'center')
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setFont(defaultfont)
+        love.graphics.printf('Press Enter to rematch', 0, 40, VIRTUAL_WIDTH, 'center')
+        love.graphics.printf('Press Esc to quit', 0, 50, VIRTUAL_WIDTH, 'center')
     end
 end
 
