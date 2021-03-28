@@ -1,5 +1,21 @@
+--[[
+  CS50G Project 0
+  Pong remake
+  Author: Maxime Blanc
+  -- https://github.com/salty-max
+  -- MAIN --
+]]
+
+-- Library to set virtual resolution
 -- https://github.com/Ulydev/push
 local push = require 'lib/push'
+
+-- Library to implement a class system in lua
+-- https://github.com/vrld/hump/blob/master/class.lua
+Class = require 'class'
+
+require 'Paddle'
+require 'Ball'
 
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
@@ -31,23 +47,50 @@ function love.load()
     vsync = true
   })
 
-  -- Velocity and position for the ball at startup
-  startBallX = VIRTUAL_WIDTH / 2 - 2
-  startBallY = VIRTUAL_HEIGHT / 2 - 2
-  ballX = startBallX
-  ballY = startBallY
-  -- Randomize default velocity for the ball
-  ballDX = math.random(2) == 1 and 100 or -100
-  ballDY = math.random(-50, 50) * 1.5
+  -- Initialize players paddle
+  player1 = Paddle(10, 30, 5, 20)
+  player2 = Paddle(VIRTUAL_WIDTH - 10, VIRTUAL_HEIGHT - 30, 5, 20)
+
+  -- Place a ball in the middle of the screen
+  ball = Ball(VIRTUAL_WIDTH / 2 - 2, VIRTUAL_HEIGHT / 2 - 2, 4, 4)
 
   player1Score = 0
   player2Score = 0
 
-  player1Y = 30
-  player2Y = VIRTUAL_HEIGHT - 50
-
   -- Default game state
   gameState = 'start'
+end
+
+function love.update(dt)
+  -- Player 1 movement
+  if love.keyboard.isDown('z') then
+    -- Add negative speed to the paddle
+    player1.dy = -PADDLE_SPEED
+  elseif love.keyboard.isDown('s') then
+    -- Add positive speed to the paddle
+    player1.dy = PADDLE_SPEED
+  else
+    player1.dy = 0
+  end
+
+  -- Player 2 movement
+  -- Same behavior than player 1
+  if love.keyboard.isDown('up') then
+    player2.dy = -PADDLE_SPEED
+  elseif love.keyboard.isDown('down') then
+    player2.dy = PADDLE_SPEED
+  else
+    player2.dy = 0
+  end
+
+  -- Update ball velocity only when in play state
+  -- scaled by dt so movement is framerate-independent
+  if gameState == 'play' then
+    ball:update(dt)
+  end
+
+  player1:update(dt)
+  player2:update(dt)
 end
 
 function love.keypressed(key)
@@ -59,47 +102,17 @@ function love.keypressed(key)
     else
       gameState = 'start'
 
-      -- Reset ball's position
-      ballX = startBallX
-      ballY = startBallY
-      -- and give ball's dx and dy a new random starting value
-      ballDX = math.random(2) == 1 and 100 or -100
-      ballDY = math.random(-50, 50) * 1.5
+      -- Reset ball position and give it a new random starting velocity
+      ball:reset()
     end
   end
 end
 
-function love.update(dt)
-  -- Player 1 movement
-  if love.keyboard.isDown('z') then
-    -- Add negative paddle speed to current Y scaled by deltaTime
-    -- clamped to the bounds of the screen
-    player1Y = math.max(0, player1Y + -PADDLE_SPEED * dt)
-  elseif love.keyboard.isDown('s') then
-    -- Add positive paddle speed to current Y scaled by deltaTime
-    player1Y = math.min(VIRTUAL_HEIGHT - 20, player1Y + PADDLE_SPEED * dt)
-  end
-
-  -- Player 2 movement
-  -- Same behavior than player 1
-  if love.keyboard.isDown('up') then
-    player2Y = math.max(0, player2Y + -PADDLE_SPEED * dt)
-  elseif love.keyboard.isDown('down') then
-    player2Y = math.min(VIRTUAL_HEIGHT - 20, player2Y + PADDLE_SPEED * dt)
-  end
-
-  -- Update ball velocity only when in play state
-  -- scaled by dt so movement is framerate-independent
-  if gameState == 'play' then
-    ballX = ballX + ballDX * dt
-    ballY = ballY + ballDY * dt
-  end
-end
 
 function love.draw()
   -- Begin rendering at virtual resolution
   push:apply('start')
-  -- Clear the screen
+  -- Clear the screen and apply background
   love.graphics.clear(40/255, 45/255, 52/255, 1)
 
   -- Draw welcome text
@@ -112,10 +125,10 @@ function love.draw()
   love.graphics.print(tostring(player2Score), VIRTUAL_WIDTH / 2 + 30, VIRTUAL_HEIGHT / 3)
 
   -- Render paddles
-  love.graphics.rectangle('fill', 10, player1Y, 5, 20)
-  love.graphics.rectangle('fill', VIRTUAL_WIDTH - 15, player2Y, 5, 20)
+  player1:render()
+  player2:render()
   -- Render ball
-  love.graphics.rectangle('fill', ballX, ballY, 4, 4)
+  ball:render()
 
   -- End rendering at virtual resolution
   push:apply('end')
