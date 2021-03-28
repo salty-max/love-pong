@@ -19,10 +19,10 @@ Class = require 'class'
 require 'Paddle'
 require 'Ball'
 
-WINDOW_WIDTH = 1280
-WINDOW_HEIGHT = 720
-VIRTUAL_WIDTH = 432
-VIRTUAL_HEIGHT = 243
+WINDOW_WIDTH = 1024
+WINDOW_HEIGHT = 768
+VIRTUAL_WIDTH = 320
+VIRTUAL_HEIGHT = 240
 
 PADDLE_SPEED = 200
 SCORE_TO_WIN = 10
@@ -54,7 +54,7 @@ function love.load()
     -- Initialize virtual resolution
     push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, {
         fullscreen = false,
-        resizable = false,
+        resizable = true,
         vsync = true
     })
 
@@ -75,6 +75,10 @@ function love.load()
 
     -- Default game state
     gameState = 'start'
+end
+
+function love.resize(w, h)
+    push:resize(w, h)
 end
 
 function love.update(dt)
